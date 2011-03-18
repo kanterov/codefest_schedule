@@ -1,0 +1,10 @@
+bin/*
+parts/*
+eggs/*
+*.swp
+develop-eggs/*
+lib/*
+include/*
+.installed.cfg
+*.egg-info
+
