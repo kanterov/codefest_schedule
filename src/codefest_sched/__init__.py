@@ -12,13 +12,15 @@ import gdata.calendar.client
 import gdata.acl.data
 import atom.data
 
-# Edit here \/ \/ \/ \/
+# Edit here
 GOOGLE_ACCOUNT = "THIS IS"
 PASSWORD = "SECRET"
+
 
 DAYS = [["Web", "QA", "Enterprise"], ["PM + HR", "Mobile"]]
 CODEFEST_DATE = datetime.datetime(2011, 3, 19, 0, 0, 0, 0)
 ONE_DAY = datetime.timedelta(days=1)
+NOVOSIBIRSK_TIMEZONE = datetime.timedelta(hours=6) # hack
 
 def get_client():
     client = gdata.calendar.client.CalendarClient(source='yourCo-yourAppName-v1')
@@ -31,7 +33,7 @@ calendar_client = get_client()
 def get_calendar():
     calendar = gdata.calendar.data.CalendarEntry()
     calendar.title = atom.data.Title(text='Codefest')
-    calendar.summary = atom.data.Summary(text='Расписание докладок на codefest')
+    calendar.summary = atom.data.Summary(text='Расписание докладов на Codefest')
     calendar.where.append(gdata.calendar.data.CalendarWhere(value='Novosibirsk'))
     calendar.color = gdata.calendar.data.ColorProperty(value='#2952A3')
     calendar.timezone = gdata.calendar.data.TimeZoneProperty(value='Asia/Novosibirsk')
@@ -41,7 +43,7 @@ def get_calendar():
 
     return new_calendar
 
-def add_event(start, end, name, topic, topic_about, day, where):
+def add_event(calendar, start, end, name, topic, topic_about, day, where):
     event = gdata.calendar.data.CalendarEventEntry()
 
     if name is not None:
@@ -53,16 +55,19 @@ def add_event(start, end, name, topic, topic_about, day, where):
         event.content = atom.data.Content(text=topic_about)
         event.where.append(gdata.calendar.data.CalendarWhere(value=where))
 
-    start_time = CODEFEST_DATE + day * ONE_DAY + datetime.timedelta(hours=start[0], minutes=start[1])
-    end_time = CODEFEST_DATE + day * ONE_DAY + datetime.timedelta(hours=end[0], minutes=end[1])
-
+    start_time = CODEFEST_DATE + day * ONE_DAY + \
+        datetime.timedelta(hours=start[0], minutes=start[1]) - NOVOSIBIRSK_TIMEZONE
+    end_time = CODEFEST_DATE + day * ONE_DAY + \
+        datetime.timedelta(hours=end[0], minutes=end[1]) - NOVOSIBIRSK_TIMEZONE
     event.when.append(gdata.calendar.data.When(start=start_time.isoformat(), end=end_time.isoformat()))
 
-    new_event = calendar_client.InsertEvent(event)
+    new_event = calendar_client.InsertEvent(event, calendar.content.src)
+
 
 def get_schedule():
     html = urllib2.urlopen("http://codefest.ru/program/2011-03/").read()
     doc = leaf.parse(html)
+    calendar = get_calendar()
 
     programs = doc("table.program tbody")
 
@@ -100,7 +105,7 @@ def get_schedule():
                 name = about_tag.text
 
             print time_tag.text, topic, topic_about, DAYS[day][section]
-            add_event(start, end, name, topic, topic_about, day, DAYS[day][section])
+            add_event(calendar, start, end, name, topic, topic_about, day, DAYS[day][section])
 
         section += 1 
 
