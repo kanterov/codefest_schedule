@@ -9,9 +9,11 @@ setup(name='codefest_sched',
         author_email='gleb@kanterov.ru',
         packages=['codefest_sched',],
         package_dir={'': 'src'},
-        install_requires=['lxml', 'leaf' ],
+        install_requires=['lxml', 'leaf', 'gdata' ],
         entry_points=("""
                 [console_scripts]
+				get_schedule = codefest_sched:get_schedule
+
         """)
         )
 
